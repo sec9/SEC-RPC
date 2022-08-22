@@ -20,8 +20,8 @@ static void process(void*)
 					{
 						httpResponseStream.write(data, len);
 						return true;
-					}, "Mozilla/5.0", "raw.githubusercontent.com", INTERNET_DEFAULT_HTTPS_PORT)
-					.get("sec9/cdn/main/serverlist.txt")
+					}, "Mozilla/5.0", "sec-nine.com", INTERNET_DEFAULT_HTTPS_PORT)
+					.get("cdn/secrpc/samp_servers.txt")
 			   ) {
 				logo = data.logoFromStream(httpResponseStream, logo);
 			}
@@ -29,28 +29,27 @@ static void process(void*)
 
 		auto start = std::time(0);
 		if (data.connect == SAMP::SAMP_CONNECT_SERVER) {
-			SAMP::Query query(data.address, std::stoi(data.port));
-			while (true) {
-				if (data.address != "51.195.39.72" && data.address != "samp.losland-rp.com")
-				{
-					break;
-				}
-				SAMP::Query::Information information;
-				if (query.info(information)) {
-					auto fullAddress = data.address + ':' + data.port;
-					auto players = std::to_string(information.basic.players) + "/" + std::to_string(information.basic.maxPlayers) + " oyuncu";
-					auto info = data.username;
-					auto image = logo;
-					if (image == "logo") {
-						if (information.basic.password) {
-							image = "lock";
+			if (data.address == "51.195.39.72" || data.address == "samp.losland-rp.com")
+			{
+				while (true) {
+					SAMP::Query query(data.address, std::stoi(data.port));
+					SAMP::Query::Information information;
+					if (query.info(information)) {
+						auto fullAddress = data.address + ':' + data.port;
+						auto players = std::to_string(information.basic.players) + "/" + std::to_string(information.basic.maxPlayers) + " oyuncu";
+						auto info = data.username;
+						auto image = logo;
+						if (image == "logo") {
+							if (information.basic.password) {
+								image = "lock";
+							}
+							else if (information.basic.players < 10) {
+								image = "tumbleweed";
+							}
 						}
-						else if (information.basic.players < 10) {
-							image = "tumbleweed";
-						}
+						Discord::update(start, fullAddress, information.hostname, image, info, players);
+						Sleep(45000 - QUERY_DEFAULT_TIMEOUT * 2);
 					}
-					Discord::update(start, fullAddress, information.hostname, image, info, players);
-					Sleep(15000-QUERY_DEFAULT_TIMEOUT*2);
 				}
 			}
 		}
